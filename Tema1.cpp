@@ -2,6 +2,7 @@
 #include <random>
 #include "object2D.h"
 #include "transform2D.h"
+#include <tuple>
 
 using namespace std;
 using namespace m1;
@@ -26,6 +27,15 @@ vector<pair<int, int>> motors;
 float speeds[10] = { 4, 8, 10, 11, 12, 12.5, 13 };
 float translateX = 0, translateY = 0;
 
+int nr_chickens;
+vector<pair<int, int>> chickens;
+vector<pair<int, int>> initial_chickens = { {0,0}, {0,1}, {0,2}, {0,3},{0,4},{1,0},{1,1},{1,2},{1,3},{1,4} };
+int translateX_chicken = 0;
+int translateY_chicken = 0;
+int s = 3;
+int nr_bullets;
+vector<tuple<int, int, int>> bullets;
+
 void Tema1::Init() {
     const glm::ivec2 resolution = window->GetResolution();
     const auto camera = GetSceneCamera();
@@ -49,6 +59,9 @@ void Tema1::Init() {
     Mesh* square = object2D::create_block("square", corner, 60, glm::vec3(0.7, 0.7, 0.7), true);
     Mesh* motor = object2D::create_motor("motor", corner, 60, glm::vec3(1, 0, 0), glm::vec3(255.f / 255.f, 165.f / 255.f, 0), true);
     Mesh* cannon = object2D::create_cannon("cannon", corner, 60, glm::vec3(0.5, 0.5, 0.5), true);
+    Mesh* enemy = object2D::create_enemy("enemy", corner, 60);
+    Mesh* bullet = object2D::create_bullet("bullet", corner, 30);
+    Mesh* egg = object2D::create_egg("egg", corner, 30);
 
     AddMeshToList(editorBlock);
     AddMeshToList(componentsRectangle);
@@ -61,6 +74,10 @@ void Tema1::Init() {
     AddMeshToList(square);
     AddMeshToList(motor);
     AddMeshToList(cannon);
+    AddMeshToList(enemy);
+    AddMeshToList(bullet);
+    AddMeshToList(egg);
+
 }
 
 void Tema1::FrameStart() {
@@ -84,7 +101,7 @@ void Tema1::Update(const float delta_time_seconds) {
                         if (dfs(i, j, aux) == 10 - componente_ramase)
                             ok = 1;
                         else
-                            ok = 2, printf("aici\n");
+                            ok = 2;
                     }
                 }
             }
@@ -94,7 +111,7 @@ void Tema1::Update(const float delta_time_seconds) {
                 int b = a.first;
                 for (int l = 0; l < b; ++l) {
                     if (grid[l][a.second] != 0)
-                        ok = 2, printf("aici2\n");
+                        ok = 2;
                 }
             }
 
@@ -103,7 +120,7 @@ void Tema1::Update(const float delta_time_seconds) {
                 int b = a.first;
                 for (int l = 8; l > b + 2; --l) {
                     if (grid[l][a.second] != 0)
-                        ok = 2, printf("aici3\n");
+                        ok = 2;
                 }
             }
 
@@ -205,29 +222,86 @@ void Tema1::Update(const float delta_time_seconds) {
         }
     }
     else {
-        printf("%d %d %d %d\n", minx, maxx, miny, maxy);
+        if (chickens.size() == 0) {
+            int random = rand()%500;
+            for (int i = 0; i < 10; ++i) {
+                chickens.push_back({ 70 + initial_chickens[i].second * 160 + random, 500 + initial_chickens[i].first * 120});
+            }
+        }
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 17; ++j) {
+                model_matrix_ = glm::mat3(1);
+                model_matrix_ *= transform2D::Translate(j * 30 + translateX, i * 30 + translateY);
+                model_matrix_ *= transform2D::Scale(0.5, 0.5);
+
                 if (grid[i][j] == 1) {
-                    model_matrix_ = glm::mat3(1);
-                    model_matrix_ *= transform2D::Scale(0.5, 0.5);
-                    model_matrix_ *= transform2D::Translate( j * 60 + translateX,i * 60 + translateY);
+                    
                     RenderMesh2D(meshes["square"], shaders["VertexColor"], model_matrix_);
                 }
                 else if (grid[i][j] == 2) {
-                    model_matrix_ = glm::mat3(1);
-                    model_matrix_ *= transform2D::Scale(0.5, 0.5);
-                    model_matrix_ *= transform2D::Translate(j * 60 + translateX, i * 60 + translateY);
+                    
                     RenderMesh2D(meshes["motor"], shaders["VertexColor"], model_matrix_);
                 }
                 else if (grid[i][j] == 3) {
-                    model_matrix_ = glm::mat3(1);
-                    model_matrix_ *= transform2D::Scale(0.5, 0.5);
-                    model_matrix_ *= transform2D::Translate(j * 60 + translateX, i * 60 + translateY);
+                    
                     RenderMesh2D(meshes["cannon"], shaders["VertexColor"], model_matrix_);
                 }
             }
         }
+        for (int i = 0; i < nr_bullets; ++i) {
+            auto b = bullets[i];
+            int j = std::get<0>(b);
+            int k = std::get<1>(b);
+            int l = std::get<2>(b);
+            std::get<2>(bullets[i]) += 20;
+            model_matrix_ = glm::mat3(1);
+            model_matrix_ *= transform2D::Translate(j, k + l);
+            RenderMesh2D(meshes["bullet"], shaders["VertexColor"], model_matrix_);
+            if (720 < k+l) {
+                bullets.erase(bullets.begin() + i);
+                nr_bullets--;
+            }
+        }
+        // iterate chickens backwards
+        for (int i = (int)chickens.size() - 1; i >= 0; --i) {
+
+            // draw chicken
+            model_matrix_ = glm::mat3(1);
+            model_matrix_ *= transform2D::Translate(chickens[i].first, chickens[i].second);
+            RenderMesh2D(meshes["enemy"], shaders["VertexColor"], model_matrix_);
+
+            // movement
+            chickens[i].second -= 0.1f;
+            chickens[i].first += s;
+
+            if (chickens[i].first + 70 > 1300 || chickens[i].first - 70 < 0)
+                s *= -1;
+
+            // remove if off screen (use < not == !!)
+            if (chickens[i].second < 1.0f) {
+                chickens.erase(chickens.begin() + i);
+                continue; // chicken gone, skip to next
+            }
+
+            // bullet collision, iterate backwards
+            for (int j = (int)nr_bullets - 1; j >= 0; --j) {
+
+                int bx = std::get<0>(bullets[j]);
+                int by = std::get<1>(bullets[j]) + std::get<2>(bullets[j]);
+
+                float dx = bx - chickens[i].first;
+                float dy = by - chickens[i].second;
+
+                if (dx * dx + dy * dy <= 2025) {
+                    bullets.erase(bullets.begin() + j);
+                    nr_bullets--;
+
+                    chickens.erase(chickens.begin() + i);
+                    break; // go to next chicken
+                }
+            }
+        }
+
 
     }
 }
@@ -238,23 +312,36 @@ void Tema1::FrameEnd() {
 
 void Tema1::OnInputUpdate(const float delta_time, const int mods) {
     if (window->KeyHold(GLFW_KEY_UP)) {
-        translateY = min(float(720) + 60 * (10 - maxy + 1), speeds[nr_motors] + translateY);
+        translateY = fmin(720 - 30 * (maxy + 1), speeds[nr_motors] + translateY);
     }
     if (window->KeyHold(GLFW_KEY_DOWN)) {
         translateY -= speeds[nr_motors];
-        translateY = std::fmax(translateY, - 60 * miny);
+        translateY = std::fmax(translateY, - 30 * miny);
     }
     if (window->KeyHold(GLFW_KEY_RIGHT)) {
-        translateX = min(float(1300) + 60 * (19 - maxx + 1), speeds[nr_motors] + translateX);
+        translateX = min(float(1280) - 30 * (maxx + 1), speeds[nr_motors] + translateX);
     }
     if (window->KeyHold(GLFW_KEY_LEFT)) {
         translateX -= speeds[nr_motors];
-        translateX = std::fmax(translateX, -60 * ( minx));
+        translateX = std::fmax(translateX, -30 * ( minx));
     }
     
 }
 
-void Tema1::OnKeyPress(const int key, const int mods) {}
+void Tema1::OnKeyPress(const int key, const int mods) {
+    if (key == GLFW_KEY_SPACE) {
+        for (auto c : cannons) {
+            int x = c.second;
+            int y = c.first;
+            y+=3;
+            x = x * 30 + translateX + 15;
+            y = y * 30 + translateY;
+            nr_bullets++;
+            bullets.push_back({ x, y, 0 });
+
+        }
+    }
+}
 void Tema1::OnKeyRelease(const int key, const int mods) {}
 
 void Tema1::OnMouseMove(const int mouse_x, const int mouse_y, const int delta_x, const int delta_y) {
@@ -267,6 +354,7 @@ void Tema1::OnMouseMove(const int mouse_x, const int mouse_y, const int delta_x,
 void Tema1::OnMouseBtnPress(const int mouse_x, const int mouse_y, const int button, const int mods) {
     int pos_y = 720 - mouse_y;
     if (button == 1) {
+        printf("%d %d\n", mouse_x, pos_y);
         if (click1 == false) {
             click1 = true;
             mouse_x_pos_ = mouse_x;
@@ -330,7 +418,7 @@ int Tema1::dfs(int i, int j, int a[9][17]) {
     if (grid[i][j] == 2) motors.push_back({ i, j });
     if (grid[i][j] == 3) cannons.push_back({ i,j });
     if (i >= maxy) { maxy = i; if (grid[i][j] == 3) maxy = i + 2; }
-    if (i <= miny) { miny = i; if (grid[i][j] == 2) miny = i - 1; std::printf("%d\n", miny); }
+    if (i <= miny) { miny = i; if (grid[i][j] == 2) miny = i - 1;  }
     if (j > maxx) { maxx = j; }
     if (j < minx) { minx = j; }
     int di[4] = { 1,0,-1,0 };
