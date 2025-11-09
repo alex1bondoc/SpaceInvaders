@@ -437,3 +437,35 @@ Mesh* object2D::create_egg(const std::string& name, const glm::vec3 left_bottom_
     egg->InitFromData(vertices, indices);
     return egg;
 }
+
+Mesh* object2D::create_heart(
+    const std::string& name,
+    const float size,
+    const glm::vec3 color)
+{
+    constexpr int num_points = 100;
+    constexpr float theta_increment = glm::radians(360.0f / num_points);
+    std::vector<VertexFormat> vertices;
+    std::vector<unsigned int> indices;
+
+    for (int i = 0; i < num_points; i++) {
+        const float theta = static_cast<float>(i) * theta_increment;
+        const float x = size * 16 * static_cast<float>(pow(sin(theta), 3));
+        const float y = size * (13 * cos(theta) - 5 * cos(2 * theta) - 2 * cos(3 * theta) - cos(4 * theta));
+
+        vertices.emplace_back(glm::vec3(x, y, 0), color);
+    }
+
+    // Connect the vertices to form triangles
+    for (int i = 0; i < num_points - 2; ++i) {
+        indices.push_back(0);          // center of the heart
+        indices.push_back(i + 1);
+        indices.push_back(i + 2);
+    }
+
+    const auto heart = new Mesh(name);
+    heart->SetDrawMode(GL_TRIANGLES);  // GL_TRIANGLES creates filled triangles
+    heart->InitFromData(vertices, indices);
+
+    return heart;
+}

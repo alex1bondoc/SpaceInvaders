@@ -1,4 +1,4 @@
-#include "Tema1.h"
+﻿#include "Tema1.h"
 #include <random>
 #include "object2D.h"
 #include "transform2D.h"
@@ -32,9 +32,18 @@ vector<pair<int, int>> chickens;
 vector<pair<int, int>> initial_chickens = { {0,0}, {0,1}, {0,2}, {0,3},{0,4},{1,0},{1,1},{1,2},{1,3},{1,4} };
 int translateX_chicken = 0;
 int translateY_chicken = 0;
-int s = 3;
+int s = 2;
 int nr_bullets;
 vector<tuple<int, int, int>> bullets;
+float respawn_time = -1;
+int chicken_speed = 5;
+vector<int> random_time_chickens;
+vector<int> random_time_chickens2;
+int hearts = 3;
+int random_time = 100;
+vector<tuple<int, int, int>> eggs;
+int egg_speed = 2;
+int rounds = 0;
 
 void Tema1::Init() {
     const glm::ivec2 resolution = window->GetResolution();
@@ -62,7 +71,7 @@ void Tema1::Init() {
     Mesh* enemy = object2D::create_enemy("enemy", corner, 60);
     Mesh* bullet = object2D::create_bullet("bullet", corner, 30);
     Mesh* egg = object2D::create_egg("egg", corner, 30);
-
+    Mesh* heart = object2D::create_heart("heart", 1, glm::vec3(1, 0, 0));
     AddMeshToList(editorBlock);
     AddMeshToList(componentsRectangle);
     AddMeshToList(remainingBlocksRectangle);
@@ -77,6 +86,7 @@ void Tema1::Init() {
     AddMeshToList(enemy);
     AddMeshToList(bullet);
     AddMeshToList(egg);
+    AddMeshToList(heart);
 
 }
 
@@ -222,10 +232,30 @@ void Tema1::Update(const float delta_time_seconds) {
         }
     }
     else {
-        if (chickens.size() == 0) {
+        if (hearts <= 0) {
+            exit(1);
+        }
+        for (int i = 0; i < 3; i++) {
+            if (i < hearts) {
+                model_matrix_ = glm::mat3(1);
+                model_matrix_ *= transform2D::Translate(1200 + static_cast<float>(i) * 30, 700);
+                RenderMesh2D(meshes["heart"], shaders["VertexColor"], model_matrix_);
+            }
+        }
+        if (chickens.size() == 0 && respawn_time <= 0) {
             int random = rand()%500;
             for (int i = 0; i < 10; ++i) {
-                chickens.push_back({ 70 + initial_chickens[i].second * 160 + random, 500 + initial_chickens[i].first * 120});
+                chickens.push_back({ 70 + initial_chickens[i].second * 160 + random, 450 + initial_chickens[i].first * 120});
+                random_time_chickens.push_back(rand() % random_time + random_time / 2);
+                random_time_chickens2.push_back(random_time_chickens[i]);
+            }
+            respawn_time = 5;
+            s*=2;
+            random_time /= 2;
+            egg_speed *= 2;
+            rounds++;
+            if (rounds > 3) {
+                exit(0);
             }
         }
         for (int i = 0; i < 9; ++i) {
@@ -269,7 +299,11 @@ void Tema1::Update(const float delta_time_seconds) {
             model_matrix_ = glm::mat3(1);
             model_matrix_ *= transform2D::Translate(chickens[i].first, chickens[i].second);
             RenderMesh2D(meshes["enemy"], shaders["VertexColor"], model_matrix_);
-
+            random_time_chickens[i] -= delta_time_seconds;
+            if (random_time_chickens[i] <= 0) {
+                random_time_chickens[i] = random_time_chickens2[i];
+                eggs.push_back({ chickens[i].first, chickens[i].second, 35 });
+            }
             // movement
             chickens[i].second -= 0.1f;
             chickens[i].first += s;
@@ -280,6 +314,7 @@ void Tema1::Update(const float delta_time_seconds) {
             // remove if off screen (use < not == !!)
             if (chickens[i].second < 1.0f) {
                 chickens.erase(chickens.begin() + i);
+                hearts--;
                 continue; // chicken gone, skip to next
             }
 
@@ -292,7 +327,7 @@ void Tema1::Update(const float delta_time_seconds) {
                 float dx = bx - chickens[i].first;
                 float dy = by - chickens[i].second;
 
-                if (dx * dx + dy * dy <= 2025) {
+                if (dx * dx + dy * dy <= 2525) {
                     bullets.erase(bullets.begin() + j);
                     nr_bullets--;
 
@@ -300,6 +335,137 @@ void Tema1::Update(const float delta_time_seconds) {
                     break; // go to next chicken
                 }
             }
+        }
+        for (int i = 0; i < chickens.size(); i++) {
+
+            float cx = chickens[i].first;
+            float cy = chickens[i].second;
+            float radius = 36.0f;
+
+            bool hit = false;
+
+            for (int gi = 0; gi < 9 && !hit; gi++) {
+                for (int gj = 0; gj < 17 && !hit; gj++) {
+
+                    if (grid[gi][gj] != 0) {
+                        int mul = 1;
+                        if (grid[gi][gj] == 3) mul = 3;
+                        float left = gj * 30 + translateX;
+                        float bottom = gi * 30 + translateY;
+                        float right = left + 30;
+                        float top = bottom + 30 * mul;
+
+                        // punctul cel mai apropiat din pătrat
+                        float closestX = cx;
+                        if (cx < left) closestX = left;
+                        else if (cx > right) closestX = right;
+
+                        float closestY = cy;
+                        if (cy < bottom) closestY = bottom;
+                        else if (cy > top) closestY = top;
+
+                        float dx = cx - closestX;
+                        float dy = cy - closestY;
+
+                        if (dx * dx + dy * dy <= radius * radius) {
+                            hit = true;
+                        }
+                    }
+                }
+            }
+
+            if (hit) {
+                chickens.erase(chickens.begin() + i);
+                random_time_chickens.erase(random_time_chickens.begin() + i);
+                i--;                 // IMPORTANT ca să nu sari peste următorul
+                hearts--;
+                continue;            // exact cum ai la gloanțe
+            }
+        }
+        // iterate eggs backwards
+        for (int i = (int)eggs.size() - 1; i >= 0; --i) {
+
+            float ex = get<0>(eggs[i]);
+            float ey = get<1>(eggs[i]) + get<2>(eggs[i]);
+
+            // desen
+            model_matrix_ = glm::mat3(1);
+            model_matrix_ *= transform2D::Translate(ex, ey);
+            RenderMesh2D(meshes["egg"], shaders["VertexColor"], model_matrix_);
+
+            // mișcare
+            get<2>(eggs[i]) -= egg_speed;
+            ey = get<1>(eggs[i]) + get<2>(eggs[i]);
+
+            // 1. dacă iese din ecran jos → șterge
+            if (ey < 0) {
+                eggs.erase(eggs.begin() + i);
+                continue;
+            }
+
+            // 2. coliziune cu grid (nava)
+            bool hitShip = false;
+
+            for (int gi = 0; gi < 9 && !hitShip; gi++) {
+                for (int gj = 0; gj < 17 && !hitShip; gj++) {
+
+                    if (grid[gi][gj] != 0) {
+                        int mul = 1;
+                        if (grid[gi][gj] == 3) mul = 3;
+                        float left = gj * 30 + translateX;
+                        float bottom = gi * 30 + translateY;
+                        float right = left + 30;
+                        float top = bottom + 30 * mul;
+
+                        float closestX = ex;
+                        if (ex < left) closestX = left;
+                        else if (ex > right) closestX = right;
+
+                        float closestY = ey;
+                        if (ey < bottom) closestY = bottom;
+                        else if (ey > top) closestY = top;
+
+                        float dx = (ex - closestX) / 10.0f;   // Raza X = 10
+                        float dy = (ey - closestY) / 15.0f;   // Raza Y = 15
+
+                        if (dx * dx + dy * dy <= 1.0f) {
+                            hitShip = true;
+                        }
+                    }
+                }
+            }
+
+            if (hitShip) {
+                hearts--;
+                eggs.erase(eggs.begin() + i);
+                continue;
+            }
+
+            // 3. coliziune cu glonț
+            for (int b = nr_bullets - 1; b >= 0; b--) {
+
+                float bx = get<0>(bullets[b]);
+                float by = get<1>(bullets[b]) + get<2>(bullets[b]);
+
+                float dx = (bx - ex) / 10.0f;
+                float dy = (by - ey) / 15.0f;
+
+                if (dx * dx + dy * dy <= 1.0f) {
+
+                    // șterge glonțul
+                    bullets.erase(bullets.begin() + b);
+                    nr_bullets--;
+
+                    // șterge oul
+                    eggs.erase(eggs.begin() + i);
+
+                    break;
+                }
+            }
+        }
+
+        if (chickens.size() == 0) {
+            respawn_time -= delta_time_seconds;
         }
 
 
