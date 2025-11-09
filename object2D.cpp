@@ -298,3 +298,12 @@ Mesh* object2D::create_block(
     square->InitFromData(vertices, indices);
     return square;
 }
+Mesh* create_enemy(const std::string& name, const glm::vec3 center, const float length) {
+    
+}
+Mesh* create_bullet(const std::string& name, const glm::vec3 center, const float length) {
+
+}
+Mesh* create_egg(const std::string& name, const glm::vec3 center, const float length) {
+
+}

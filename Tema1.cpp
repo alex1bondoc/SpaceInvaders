@@ -75,9 +75,9 @@ void Tema1::Update(const float delta_time_seconds) {
     if (game == 0) {
         if (nr_cannon > 0 && nr_motors > 0) {
             int ok = 0;
-            miny = 9, maxy = 0, minx = 17, maxy = 0;
+            miny = 9, maxy = 0, minx = 17, maxx = 0;
             int aux[9][17] = { 0 };
-
+            motors.clear(), cannons.clear();
             for (int i = 0; i < 9 && !ok; ++i) {
                 for (int j = 0; j < 17 && !ok; ++j) {
                     if (grid[i][j] != 0) {
@@ -211,23 +211,24 @@ void Tema1::Update(const float delta_time_seconds) {
                 if (grid[i][j] == 1) {
                     model_matrix_ = glm::mat3(1);
                     model_matrix_ *= transform2D::Scale(0.5, 0.5);
-                    model_matrix_ *= transform2D::Translate(100 + j * 60 + translateX, 100 + i * 60 + translateY);
+                    model_matrix_ *= transform2D::Translate( j * 60 + translateX,i * 60 + translateY);
                     RenderMesh2D(meshes["square"], shaders["VertexColor"], model_matrix_);
                 }
                 else if (grid[i][j] == 2) {
                     model_matrix_ = glm::mat3(1);
                     model_matrix_ *= transform2D::Scale(0.5, 0.5);
-                    model_matrix_ *= transform2D::Translate(100 + j * 60 + translateX, 100 + i * 60 + translateY);
+                    model_matrix_ *= transform2D::Translate(j * 60 + translateX, i * 60 + translateY);
                     RenderMesh2D(meshes["motor"], shaders["VertexColor"], model_matrix_);
                 }
                 else if (grid[i][j] == 3) {
                     model_matrix_ = glm::mat3(1);
                     model_matrix_ *= transform2D::Scale(0.5, 0.5);
-                    model_matrix_ *= transform2D::Translate(100 + j * 60 + translateX, 100 + i * 60 + translateY);
+                    model_matrix_ *= transform2D::Translate(j * 60 + translateX, i * 60 + translateY);
                     RenderMesh2D(meshes["cannon"], shaders["VertexColor"], model_matrix_);
                 }
             }
         }
+
     }
 }
 
@@ -237,17 +238,20 @@ void Tema1::FrameEnd() {
 
 void Tema1::OnInputUpdate(const float delta_time, const int mods) {
     if (window->KeyHold(GLFW_KEY_UP)) {
-        translateY = min(float(720), speeds[nr_motors] + translateY);
+        translateY = min(float(720) + 60 * (10 - maxy + 1), speeds[nr_motors] + translateY);
     }
     if (window->KeyHold(GLFW_KEY_DOWN)) {
         translateY -= speeds[nr_motors];
+        translateY = std::fmax(translateY, - 60 * miny);
     }
     if (window->KeyHold(GLFW_KEY_RIGHT)) {
-        translateX += speeds[nr_motors];
+        translateX = min(float(1300) + 60 * (19 - maxx + 1), speeds[nr_motors] + translateX);
     }
     if (window->KeyHold(GLFW_KEY_LEFT)) {
         translateX -= speeds[nr_motors];
+        translateX = std::fmax(translateX, -60 * ( minx));
     }
+    
 }
 
 void Tema1::OnKeyPress(const int key, const int mods) {}
@@ -281,15 +285,15 @@ void Tema1::OnMouseBtnPress(const int mouse_x, const int mouse_y, const int butt
             int j = (pos_y - 20) / 60;
 
             if (grid[j][i] != 0) {
-                if (grid[j][i] == 3) { nr_cannon--; cannons.erase(remove(cannons.begin(), cannons.end(), make_pair(j, i)), cannons.end()); }
-                else if (grid[j][i] == 2) { nr_motors--; motors.erase(remove(motors.begin(), motors.end(), make_pair(j + 1, i)), motors.end()); }
+                if (grid[j][i] == 3) { nr_cannon--; }
+                else if (grid[j][i] == 2) { nr_motors--; }
                 grid[j][i] = 0;
                 ok = 1;
             }
             else {
-                if (grid[j - 1][i] == 3) grid[j - 1][i] = 0, ok = 1, nr_cannon--, cannons.erase(remove(cannons.begin(), cannons.end(), make_pair(j - 1, i)), cannons.end());
-                if (grid[j - 2][i] == 3) grid[j - 2][i] = 0, ok = 1, nr_cannon--, cannons.erase(remove(cannons.begin(), cannons.end(), make_pair(j - 2, i)), cannons.end());
-                if (grid[j + 1][i] == 2) grid[j + 1][i] = 0, ok = 1, nr_motors--, motors.erase(remove(motors.begin(), motors.end(), make_pair(j + 1, i)), motors.end());
+                if (grid[j - 1][i] == 3) grid[j - 1][i] = 0, ok = 1, nr_cannon--;
+                if (grid[j - 2][i] == 3) grid[j - 2][i] = 0, ok = 1, nr_cannon--;
+                if (grid[j + 1][i] == 2) grid[j + 1][i] = 0, ok = 1, nr_motors--;
             }
             if (ok) componente_ramase++;
         }
@@ -305,8 +309,8 @@ void Tema1::OnMouseBtnRelease(const int mouse_x, const int mouse_y, const int bu
             int j = (pos_y - 20) / 60;
             if ((selected == 3 && j <= 6 || selected == 2 && j >= 1 || selected == 1) && grid[j][i] == 0) {
                 if (grid[j - 1][i] != 3 && grid[j - 2][i] != 3 && grid[j + 1][i] != 2) {
-                    if (grid[j + 1][i] == 0 && grid[j + 2][i] == 0 && selected == 3) grid[j][i] = selected, ok = 1, nr_cannon++, cannons.push_back({ j, i });
-                    if (grid[j - 1][i] == 0 && selected == 2) grid[j][i] = selected, ok = 1, nr_motors++, motors.push_back({ j, i });
+                    if (grid[j + 1][i] == 0 && grid[j + 2][i] == 0 && selected == 3) grid[j][i] = selected, ok = 1, nr_cannon++;
+                    if (grid[j - 1][i] == 0 && selected == 2) grid[j][i] = selected, ok = 1, nr_motors++;
                     if (selected == 1) { grid[j][i] = selected, ok = 1; }
                 }
             }
@@ -323,6 +327,12 @@ void Tema1::OnWindowResize(const int width, const int height) {}
 int Tema1::dfs(int i, int j, int a[9][17]) {
     a[i][j] = 1;
     int size = 1;
+    if (grid[i][j] == 2) motors.push_back({ i, j });
+    if (grid[i][j] == 3) cannons.push_back({ i,j });
+    if (i >= maxy) { maxy = i; if (grid[i][j] == 3) maxy = i + 2; }
+    if (i <= miny) { miny = i; if (grid[i][j] == 2) miny = i - 1; std::printf("%d\n", miny); }
+    if (j > maxx) { maxx = j; }
+    if (j < minx) { minx = j; }
     int di[4] = { 1,0,-1,0 };
     int dj[4] = { 0,-1,0,1 };
     for (int k = 0; k < 4; ++k) {
@@ -330,10 +340,6 @@ int Tema1::dfs(int i, int j, int a[9][17]) {
         int nj = j + dj[k];
         if (ni >= 0 && ni < 9 && nj >= 0 && nj < 17) {
             if (a[ni][nj] == 0 && grid[ni][nj] > 0) {
-                if (ni >= maxy) { maxy = ni; if (grid[ni][nj] == 3) maxy = ni + 2; }
-                if (ni <= miny) { miny = ni; if (grid[ni][nj] == 2) miny = ni - 1; std::printf("%d\n", miny); }
-                if (nj > maxx) { maxx = nj; }
-                if (nj < minx) { minx = nj; }
                 size += dfs(ni, nj, a);
             }
         }
