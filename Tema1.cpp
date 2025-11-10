@@ -3,6 +3,7 @@
 #include "object2D.h"
 #include "transform2D.h"
 #include <tuple>
+#include "components/text_renderer.h"
 
 using namespace std;
 using namespace m1;
@@ -44,8 +45,13 @@ int random_time = 100;
 vector<tuple<int, int, int>> eggs;
 int egg_speed = 2;
 int rounds = 0;
-
+int score = 0;
+gfxc::TextRenderer *textRenderer;
 void Tema1::Init() {
+    textRenderer = new gfxc::TextRenderer(window->props.selfDir, 1280, 720);
+    textRenderer->Load(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::FONTS, "Hack-Bold.ttf"), 18);
+        
+    textRenderer->Load(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::FONTS, "Hack-Bold.ttf"), 18);
     const glm::ivec2 resolution = window->GetResolution();
     const auto camera = GetSceneCamera();
     camera->SetOrthographic(0, static_cast<float>(resolution.x), 0, static_cast<float>(resolution.y), 0.01f, 400);
@@ -242,6 +248,10 @@ void Tema1::Update(const float delta_time_seconds) {
                 RenderMesh2D(meshes["heart"], shaders["VertexColor"], model_matrix_);
             }
         }
+        if (textRenderer) {
+            textRenderer->RenderText("score: " + std::to_string(score),
+                1182, 700,  1, glm::vec3(1, 1, 1));
+        }
         if (chickens.size() == 0 && respawn_time <= 0) {
             int random = rand()%500;
             for (int i = 0; i < 10; ++i) {
@@ -330,7 +340,7 @@ void Tema1::Update(const float delta_time_seconds) {
                 if (dx * dx + dy * dy <= 2525) {
                     bullets.erase(bullets.begin() + j);
                     nr_bullets--;
-
+                    score++;
                     chickens.erase(chickens.begin() + i);
                     break; // go to next chicken
                 }

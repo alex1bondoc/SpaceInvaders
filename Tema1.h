@@ -1,6 +1,8 @@
 #pragma once
 
 #include "components/simple_scene.h"
+#include "components/text_renderer.h"
+
 
 namespace m1
 {
