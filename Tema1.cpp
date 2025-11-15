@@ -25,24 +25,24 @@ int game = 0;
 int maxx = -1, minx = 17, maxy = -1, miny = 9;
 vector<pair<int, int>> cannons;
 vector<pair<int, int>> motors;
-float speeds[10] = { 4, 8, 10, 11, 12, 12.5, 13 };
+float speeds[10] = { 0, 4, 8, 10, 11, 12, 12.5, 13 };
 float translateX = 0, translateY = 0;
 
 int nr_chickens;
-vector<pair<int, int>> chickens;
-vector<pair<int, int>> initial_chickens = { {0,0}, {0,1}, {0,2}, {0,3},{0,4},{1,0},{1,1},{1,2},{1,3},{1,4} };
+vector<tuple<float, float, float>> chickens;
+vector<pair<float, float>> initial_chickens = { {0,0}, {0,1}, {0,2}, {0,3},{0,4},{1,0},{1,1},{1,2},{1,3},{1,4} };
 int translateX_chicken = 0;
 int translateY_chicken = 0;
 int s = 2;
 int nr_bullets;
-vector<tuple<int, int, int>> bullets;
+vector<tuple<float, float, float>> bullets;
 float respawn_time = -1;
 int chicken_speed = 5;
 vector<int> random_time_chickens;
 vector<int> random_time_chickens2;
 int hearts = 3;
 int random_time = 100;
-vector<tuple<int, int, int>> eggs;
+vector<tuple<float, float, float>> eggs;
 int egg_speed = 2;
 int rounds = 0;
 int score = 0;
@@ -237,7 +237,7 @@ void Tema1::Update(const float delta_time_seconds) {
             }
         }
     }
-    else {
+    else if (game == 1){
         if (hearts <= 0) {
             exit(1);
         }
@@ -255,7 +255,7 @@ void Tema1::Update(const float delta_time_seconds) {
         if (chickens.size() == 0 && respawn_time <= 0) {
             int random = rand()%500;
             for (int i = 0; i < 10; ++i) {
-                chickens.push_back({ 70 + initial_chickens[i].second * 160 + random, 450 + initial_chickens[i].first * 120});
+                chickens.push_back({ 320 + initial_chickens[i].second * 160, 450 + initial_chickens[i].first * 120,370 + initial_chickens[i].second * 160 });
                 random_time_chickens.push_back(rand() % random_time + random_time / 2);
                 random_time_chickens2.push_back(random_time_chickens[i]);
             }
@@ -307,22 +307,20 @@ void Tema1::Update(const float delta_time_seconds) {
 
             // draw chicken
             model_matrix_ = glm::mat3(1);
-            model_matrix_ *= transform2D::Translate(chickens[i].first, chickens[i].second);
+            model_matrix_ *= transform2D::Translate(get<2>(chickens[i]), get<1>(chickens[i]));
             RenderMesh2D(meshes["enemy"], shaders["VertexColor"], model_matrix_);
             random_time_chickens[i] -= delta_time_seconds;
             if (random_time_chickens[i] <= 0) {
                 random_time_chickens[i] = random_time_chickens2[i];
-                eggs.push_back({ chickens[i].first, chickens[i].second, 35 });
+                eggs.push_back({ get<2>(chickens[i]), get<1>(chickens[i]), 35 });
             }
             // movement
-            chickens[i].second -= 0.1f;
-            chickens[i].first += s;
+            get<1>(chickens[i]) -= 0.1f;
+            get<2>(chickens[i]) = get<0>(chickens[i]) + 250 * sin(get<1>(chickens[i]) / 20);
 
-            if (chickens[i].first + 70 > 1300 || chickens[i].first - 70 < 0)
-                s *= -1;
 
             // remove if off screen (use < not == !!)
-            if (chickens[i].second < 1.0f) {
+            if (get<1>(chickens[i]) < 1.0f) {
                 chickens.erase(chickens.begin() + i);
                 hearts--;
                 continue; // chicken gone, skip to next
@@ -334,8 +332,8 @@ void Tema1::Update(const float delta_time_seconds) {
                 int bx = std::get<0>(bullets[j]);
                 int by = std::get<1>(bullets[j]) + std::get<2>(bullets[j]);
 
-                float dx = bx - chickens[i].first;
-                float dy = by - chickens[i].second;
+                float dx = bx - get<2>(chickens[i]);
+                float dy = by - get<1>(chickens[i]);
 
                 if (dx * dx + dy * dy <= 2525) {
                     bullets.erase(bullets.begin() + j);
@@ -348,8 +346,8 @@ void Tema1::Update(const float delta_time_seconds) {
         }
         for (int i = 0; i < chickens.size(); i++) {
 
-            float cx = chickens[i].first;
-            float cy = chickens[i].second;
+            float cx = get<2>(chickens[i]);
+            float cy = get<1>(chickens[i]);
             float radius = 36.0f;
 
             bool hit = false;
@@ -389,6 +387,7 @@ void Tema1::Update(const float delta_time_seconds) {
                 random_time_chickens.erase(random_time_chickens.begin() + i);
                 i--;                 // IMPORTANT ca să nu sari peste următorul
                 hearts--;
+                score++;
                 continue;            // exact cum ai la gloanțe
             }
         }
