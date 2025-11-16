@@ -15,11 +15,11 @@ Mesh* object2D::create_start_button(
     const glm::vec3 corner = left_bottom_corner;
 
     const std::vector<VertexFormat> vertices = {
-        VertexFormat(corner, color), // 0
-        VertexFormat(corner + glm::vec3(length, 0, -1), color), // 1
-        VertexFormat(corner + glm::vec3(length / 2, length / 2, -1), color), // 2
-        VertexFormat(corner + glm::vec3(length, length, -1), color), // 3
-        VertexFormat(corner + glm::vec3(0, length, -1), color) // 4
+        VertexFormat(corner, color), 
+        VertexFormat(corner + glm::vec3(length, 0, -1), color), 
+        VertexFormat(corner + glm::vec3(length / 2, length / 2, -1), color), 
+        VertexFormat(corner + glm::vec3(length, length, -1), color), 
+        VertexFormat(corner + glm::vec3(0, length, -1), color) 
     };
 
     const auto square = new Mesh(name);
@@ -49,10 +49,10 @@ Mesh* object2D::create_rectangle(
     const glm::vec3 corner = left_bottom_corner;
 
     const std::vector<VertexFormat> vertices = {
-        VertexFormat(corner, color), // 0
-        VertexFormat(corner + glm::vec3(length, 0, -1), color), // 1
-        VertexFormat(corner + glm::vec3(length, height, -1), color), // 2 
-        VertexFormat(corner + glm::vec3(0, height, -1), color) // 3
+        VertexFormat(corner, color), 
+        VertexFormat(corner + glm::vec3(length, 0, -1), color), 
+        VertexFormat(corner + glm::vec3(length, height, -1), color), 
+        VertexFormat(corner + glm::vec3(0, height, -1), color) 
     };
 
     const auto square = new Mesh(name);
@@ -74,68 +74,36 @@ Mesh* object2D::create_rectangle(
 Mesh* object2D::create_motor(
     const std::string& name,
     const glm::vec3 left_bottom_corner,
-    const float length,       // lățimea pătratului
-    const glm::vec3 color1,  // culoare pătrat
-    const glm::vec3 color2,  // culoare flăcări
+    const float length,       
+    const glm::vec3 color1,  
+    const glm::vec3 color2,  
     const bool fill)
 {
     const glm::vec3 corner = left_bottom_corner;
     std::vector<VertexFormat> vertices;
     std::vector<unsigned int> indices;
 
-    // =========================
-    // 1️⃣ PĂTRAT DE BAZĂ
-    // =========================
-    vertices.push_back(VertexFormat(corner, color1));                          // 0 - stânga jos
-    vertices.push_back(VertexFormat(corner + glm::vec3(length, 0, 0), color1));  // 1 - dreapta jos
-    vertices.push_back(VertexFormat(corner + glm::vec3(length, length, 0), color1)); // 2 - dreapta sus
-    vertices.push_back(VertexFormat(corner + glm::vec3(0, length, 0), color1));  // 3 - stânga sus
+    vertices.push_back(VertexFormat(corner, color1));                          
+    vertices.push_back(VertexFormat(corner + glm::vec3(length, 0, 0), color1));  
+    vertices.push_back(VertexFormat(corner + glm::vec3(length, length, 0), color1)); 
+    vertices.push_back(VertexFormat(corner + glm::vec3(0, length, 0), color1));  
 
-    indices.insert(indices.end(), { 0, 1, 2, 0, 2, 3 });  // două triunghiuri pentru pătrat
+    indices.insert(indices.end(), { 0, 1, 2, 0, 2, 3 });      int base = 4;
 
-    // =========================
-    // 2️⃣ FLĂCĂRI JOS
-    // =========================
-    //float flameHeight = length / 2.0f;
-    //float flameWidth = length / 6.0f;
+    
+    vertices.push_back(VertexFormat(corner + glm::vec3(0.0f, 0.0f, 0), color2)); 
+    vertices.push_back(VertexFormat(corner + glm::vec3(0.0f, -length * 0.6f, 0), color2));
 
-    //// Flacara 1 - stânga
-    //vertices.push_back(VertexFormat(corner + glm::vec3(0, 0, 0), color2));  // 4 - sus
-    //vertices.push_back(VertexFormat(corner + glm::vec3(flameWidth/ 2, -flameHeight, 0), color2)); // 5 - vârf jos
-    //vertices.push_back(VertexFormat(corner + glm::vec3(2 *flameWidth, 0, 0), color2)); // 6 - jos dreapta
-    //indices.insert(indices.end(), { 4, 5, 6 });
 
-    //// Flacara 2 - mijloc
-    //vertices.push_back(VertexFormat(corner + glm::vec3(length / 2 - flameWidth, 0, 0), color2)); // 7 - stânga sus
-    //vertices.push_back(VertexFormat(corner + glm::vec3(length / 2, -flameHeight, 0), color2));    // 8 - vârf jos
-    //vertices.push_back(VertexFormat(corner + glm::vec3(length / 2 + flameWidth, 0, 0), color2));  // 9 - dreapta sus
-    //indices.insert(indices.end(), { 7, 8, 9 });
+    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.25f, -length * 0.3f, 0), color2)); 
+    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.25f, -length * 0.6, 0), color2)); 
 
-    //// Flacara 3 - dreapta
-    //vertices.push_back(VertexFormat(corner + glm::vec3(length - 2 * flameWidth, 0, 0), color2));   // 10 - stânga sus
-    //vertices.push_back(VertexFormat(corner + glm::vec3(length - flameWidth, -flameHeight, 0), color2)); // 11 - vârf jos
-    //vertices.push_back(VertexFormat(corner + glm::vec3(length, 0, 0), color2));                  // 12 - dreapta sus
-    //indices.insert(indices.end(), { 10, 11, 12 });
-    int base = 4;
+    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.50f, -length * 0.3f, 0), color2)); 
+    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.50f, -length * 0.6f, 0), color2)); 
 
-    // top left
-    vertices.push_back(VertexFormat(corner + glm::vec3(0.0f, 0.0f, 0), color2)); // 4 top
-    vertices.push_back(VertexFormat(corner + glm::vec3(0.0f, -length * 0.6f, 0), color2)); // 5 bottom
-
-    // spike 1
-    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.25f, -length * 0.3f, 0), color2)); // 6 top
-    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.25f, -length * 0.6, 0), color2)); // 7 bottom
-
-    // spike 2
-    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.50f, -length * 0.3f, 0), color2)); // 8 top
-    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.50f, -length * 0.6f, 0), color2)); // 9 bottom
-
-    // spike 3
-    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.75f, -length * 0.3f, 0), color2)); // 10 top
-    vertices.push_back(VertexFormat(corner + glm::vec3(length , -length * 0.6, 0), color2)); // 11 bottom
-
-    // top right
-    vertices.push_back(VertexFormat(corner + glm::vec3(length, 0.0f, 0), color2)); // 12 top
+    vertices.push_back(VertexFormat(corner + glm::vec3(length * 0.75f, -length * 0.3f, 0), color2)); 
+    vertices.push_back(VertexFormat(corner + glm::vec3(length , -length * 0.6, 0), color2)); 
+    vertices.push_back(VertexFormat(corner + glm::vec3(length, 0.0f, 0), color2)); 
 
 
 
@@ -152,12 +120,9 @@ Mesh* object2D::create_motor(
 
     indices.insert(indices.end(), ind.begin(), ind.end());
 
-    // =========================
-    // 3️⃣ CREARE MESH
-    // =========================
     Mesh* motor = new Mesh(name);
     if (!fill) {
-        motor->SetDrawMode(GL_LINE_LOOP); // pentru contur
+        motor->SetDrawMode(GL_LINE_LOOP); 
     }
     motor->InitFromData(vertices, indices);
 
@@ -165,69 +130,50 @@ Mesh* object2D::create_motor(
 }
 
 
-/**
- * Implementat - A treia formă (Tun)
- * Desenează un poligon cu o bază zimțată (ca o flacără).
- * 'length' este folosit ca lățimea formei.
- */
 Mesh* object2D::create_cannon(
     const std::string& name,
     const glm::vec3 left_bottom_corner,
-    const float length,       // lățimea pătratului
-    const glm::vec3 color,    // culoarea pătratului și semicercului
+    const float length,       
+    const glm::vec3 color,    
     const bool fill)
 {
     const glm::vec3 corner = left_bottom_corner;
     std::vector<VertexFormat> vertices;
     std::vector<unsigned int> indices;
 
-    // =========================
-    // 1️⃣ PĂTRAT DE BAZĂ
-    // =========================
-    vertices.push_back(VertexFormat(corner, color));                                  // 0 - stânga jos
-    vertices.push_back(VertexFormat(corner + glm::vec3(length, 0, 0), color));       // 1 - dreapta jos
-    vertices.push_back(VertexFormat(corner + glm::vec3(length, length, 0), color));  // 2 - dreapta sus
-    vertices.push_back(VertexFormat(corner + glm::vec3(0, length, 0), color));       // 3 - stânga sus
+    vertices.push_back(VertexFormat(corner, color));                                 
+    vertices.push_back(VertexFormat(corner + glm::vec3(length, 0, 0), color));       
+    vertices.push_back(VertexFormat(corner + glm::vec3(length, length, 0), color));  
+    vertices.push_back(VertexFormat(corner + glm::vec3(0, length, 0), color));       
 
-    // Indici pentru pătrat (2 triunghiuri)
     indices.insert(indices.end(), { 0, 1, 2, 0, 2, 3 });
 
-    // =========================
-    // 2️⃣ SEMICERC DEASUPRA PĂTRATULUI
-    // =========================
-    int numSegments = 20;  // numărul de segmente pentru semicerc
+    int numSegments = 20;  
     float radius = length / 2.0f;
-    glm::vec3 center = corner + glm::vec3(length / 2.0f, length, 0); // centrul semicercului
+    glm::vec3 center = corner + glm::vec3(length / 2.0f, length, 0); 
 
-    // Vertex centru semicerc
-    vertices.push_back(VertexFormat(center, color)); // 4
+    vertices.push_back(VertexFormat(center, color)); 
 
-    // Vertexi semicerc
     for (int i = 0; i <= numSegments; i++) {
-        float theta = glm::pi<float>() * i / numSegments; // 0 → π
+        float theta = glm::pi<float>() * i / numSegments; 
         float x = radius * cos(theta);
         float y = radius * sin(theta);
-        vertices.push_back(VertexFormat(center + glm::vec3(x, y, 0), color)); // 5..25
+        vertices.push_back(VertexFormat(center + glm::vec3(x, y, 0), color)); 
     }
 
-    // Indici pentru semicerc
     for (int i = 5; i < 5 + numSegments; i++) {
-        indices.push_back(4);    // centrul semicercului
-        indices.push_back(i);    // punct curent
-        indices.push_back(i + 1);// punct următor
+        indices.push_back(4);    
+        indices.push_back(i);    
+        indices.push_back(i + 1);
     }
-
-    // =========================
-    // 3️⃣ CREARE MESH
-    // =========================
-    vertices.push_back(VertexFormat(corner + glm::vec3(0, length, 0), glm::vec3(0.1, 0.1, 0.1)));                                  // 0 - stânga jos
-    vertices.push_back(VertexFormat(corner + glm::vec3(length, length, 0), glm::vec3(0.1, 0.1, 0.1)));       // 1 - dreapta jos
-    vertices.push_back(VertexFormat(corner + glm::vec3(length, 3 * length, 0), glm::vec3(0.1, 0.1, 0.1)));  // 2 - dreapta sus
-    vertices.push_back(VertexFormat(corner + glm::vec3(0, 3 * length, 0), glm::vec3(0.1, 0.1, 0.1)));       // 3 - stânga sus
+    vertices.push_back(VertexFormat(corner + glm::vec3(0, length, 0), glm::vec3(0.1, 0.1, 0.1)));          
+    vertices.push_back(VertexFormat(corner + glm::vec3(length, length, 0), glm::vec3(0.1, 0.1, 0.1)));     
+    vertices.push_back(VertexFormat(corner + glm::vec3(length, 3 * length, 0), glm::vec3(0.1, 0.1, 0.1))); 
+    vertices.push_back(VertexFormat(corner + glm::vec3(0, 3 * length, 0), glm::vec3(0.1, 0.1, 0.1)));      
     indices.insert(indices.end(), { 26, 27, 28, 26, 28, 29 });
     Mesh* cannon = new Mesh(name);
     if (!fill) {
-        cannon->SetDrawMode(GL_LINE_LOOP); // contur
+        cannon->SetDrawMode(GL_LINE_LOOP); 
     }
     cannon->InitFromData(vertices, indices);
 
@@ -244,10 +190,10 @@ Mesh* object2D::create_square(
     const glm::vec3 corner = left_bottom_corner;
 
     const std::vector<VertexFormat> vertices = {
-        VertexFormat(corner, color), // 0
-        VertexFormat(corner + glm::vec3(length, 0, -1), color), // 1
-        VertexFormat(corner + glm::vec3(length, length, -1), color), // 3
-        VertexFormat(corner + glm::vec3(0, length, -1), color) // 4
+        VertexFormat(corner, color), 
+        VertexFormat(corner + glm::vec3(length, 0, -1), color), 
+        VertexFormat(corner + glm::vec3(length, length, -1), color), 
+        VertexFormat(corner + glm::vec3(0, length, -1), color) 
     };
 
     const auto square = new Mesh(name);
@@ -276,10 +222,10 @@ Mesh* object2D::create_block(
     const glm::vec3 corner = left_bottom_corner;
 
     const std::vector<VertexFormat> vertices = {
-        VertexFormat(corner, color), // 0
-        VertexFormat(corner + glm::vec3(length, 0, 0), color), // 1
-        VertexFormat(corner + glm::vec3(length, length, 0), color), // 3
-        VertexFormat(corner + glm::vec3(0, length, 0), color) // 4
+        VertexFormat(corner, color), 
+        VertexFormat(corner + glm::vec3(length, 0, 0), color), 
+        VertexFormat(corner + glm::vec3(length, length, 0), color), 
+        VertexFormat(corner + glm::vec3(0, length, 0), color) 
     };
 
     const auto square = new Mesh(name);
@@ -313,25 +259,21 @@ Mesh* object2D::create_enemy(const std::string& name, const glm::vec3 center, co
     float cy = center.y;
     float H = size;
 
-    // --- Aripi ---
     float wing_h = H * 0.4f;
     float wing_w = H * 0.4f;
 
-    // Aripa stanga
-    vertices.push_back(VertexFormat(glm::vec3(cx - H / 4 , cy, 10), COLOR_GRAY)); // exterior
-    vertices.push_back(VertexFormat(glm::vec3(cx - 5 * H / 4, cy + H / 2 , 10), COLOR_GRAY)); // jos 
-    vertices.push_back(VertexFormat(glm::vec3(cx - H, cy + H, 10), COLOR_GRAY)); // sus
+    vertices.push_back(VertexFormat(glm::vec3(cx - H / 4 , cy, 10), COLOR_GRAY)); 
+    vertices.push_back(VertexFormat(glm::vec3(cx - 5 * H / 4, cy + H / 2 , 10), COLOR_GRAY));  
+    vertices.push_back(VertexFormat(glm::vec3(cx - H, cy + H, 10), COLOR_GRAY)); 
     indices.insert(indices.end(), { index, index + 1, index + 2 });
     index += 3;
 
-    // Aripa dreapta
     vertices.push_back(VertexFormat(glm::vec3(cx + H / 4 , cy, 10), COLOR_GRAY));
     vertices.push_back(VertexFormat(glm::vec3(cx + 5 * H / 4, cy + H/2, 10), COLOR_GRAY));
     vertices.push_back(VertexFormat(glm::vec3(cx + H, cy + H, 10), COLOR_GRAY));
     indices.insert(indices.end(), { index, index + 1, index + 2 });
     index += 3;
 
-    // --- Corp ---
     vertices.push_back(VertexFormat(glm::vec3(cx - H / 2, cy - H / 2, 0), COLOR_BLUE));
     vertices.push_back(VertexFormat(glm::vec3(cx + H / 2, cy - H / 2, 0), COLOR_BLUE));
     vertices.push_back(VertexFormat(glm::vec3(cx + H / 2, cy + H / 2, 0), COLOR_BLUE));
@@ -339,7 +281,6 @@ Mesh* object2D::create_enemy(const std::string& name, const glm::vec3 center, co
     indices.insert(indices.end(), { index, index + 1, index + 2, index, index + 2, index + 3 });
     index += 4;
 
-    // --- Cap ---
     float head_radius = H * 0.25f;
     int segments = 32;
     unsigned int center_idx = index;
@@ -358,18 +299,15 @@ Mesh* object2D::create_enemy(const std::string& name, const glm::vec3 center, co
     }
     index = vertices.size();
 
-    // --- Picioare ---
     float foot_h = H * 0.3f;
     float foot_w = H * 0.2f;
 
-    // Picior stanga
     vertices.push_back(VertexFormat(glm::vec3(cx - foot_w, cy - H / 2, 0), COLOR_ORANGE));
     vertices.push_back(VertexFormat(glm::vec3(cx - foot_w * 1.2 , cy - H / 2 - foot_h, 0), COLOR_ORANGE));
     vertices.push_back(VertexFormat(glm::vec3(cx - 3 * foot_w, cy - H / 2 - foot_h / 2 , 0), COLOR_ORANGE));
     indices.insert(indices.end(), { index, index + 1, index + 2 });
     index += 3;
 
-    // Picior dreapta
     vertices.push_back(VertexFormat(glm::vec3(cx + foot_w, cy - H / 2, 0), COLOR_ORANGE));
     vertices.push_back(VertexFormat(glm::vec3(cx + foot_w * 1.2, cy - H / 2 - foot_h, 0), COLOR_ORANGE));
     vertices.push_back(VertexFormat(glm::vec3(cx + 3 * foot_w, cy - H / 2 - foot_h, 0), COLOR_ORANGE));
@@ -383,26 +321,23 @@ Mesh* object2D::create_enemy(const std::string& name, const glm::vec3 center, co
 Mesh* object2D::create_bullet(const std::string& name, const glm::vec3 left_bottom_corner, const float length) {
     std::vector<VertexFormat> vertices;
     std::vector<unsigned int> indices;
-    int numSegments = 40;  // numărul de segmente pentru semicerc
+    int numSegments = 40;  
     float radius = length / 2.0f;
-    glm::vec3 center = left_bottom_corner; // centrul semicercului
+    glm::vec3 center = left_bottom_corner;
 
-    // Vertex centru semicerc
-    vertices.push_back(VertexFormat(center, glm::vec3(0.6,1,0.6))); // 4
+    vertices.push_back(VertexFormat(center, glm::vec3(0.6,1,0.6)));
 
-    // Vertexi semicerc
     for (int i = 0; i <= numSegments; i++) {
-        float theta = glm::two_pi<float>() * i / numSegments; // 0 → π
+        float theta = glm::two_pi<float>() * i / numSegments; 
         float x = radius * cos(theta);
         float y = radius * sin(theta);
-        vertices.push_back(VertexFormat(center + glm::vec3(x, y, 0), glm::vec3(0.6, 1, 0.6))); // 5..25
+        vertices.push_back(VertexFormat(center + glm::vec3(x, y, 0), glm::vec3(0.6, 1, 0.6))); 
     }
 
-    // Indici pentru semicerc
     for (int i = 5; i < 5 + numSegments; i++) {
-        indices.push_back(4);    // centrul semicercului
-        indices.push_back(i);    // punct curent
-        indices.push_back(i + 1);// punct următor
+        indices.push_back(4);    
+        indices.push_back(i);    
+        indices.push_back(i + 1);
     }
     Mesh* bullet = new Mesh(name);
     bullet->InitFromData(vertices, indices);
@@ -414,24 +349,21 @@ Mesh* object2D::create_egg(const std::string& name, const glm::vec3 left_bottom_
     std::vector<unsigned int> indices;
     int numSegments = 40;
     float radius = length / 2.0f;
-    glm::vec3 center = left_bottom_corner; // centrul semicercului
+    glm::vec3 center = left_bottom_corner; 
 
-    // Vertex centru semicerc
-    vertices.push_back(VertexFormat(center, glm::vec3(1, 1, 0.8))); // 4
+    vertices.push_back(VertexFormat(center, glm::vec3(1, 1, 0.8))); 
 
-    // Vertexi semicerc
     for (int i = 0; i <= numSegments; i++) {
-        float theta = glm::two_pi<float>() * i / numSegments; // 0 → π
+        float theta = glm::two_pi<float>() * i / numSegments; 
         float x = radius / 1.5 * cos(theta);
         float y = radius * sin(theta);
-        vertices.push_back(VertexFormat(center + glm::vec3(x, y, 0), glm::vec3(1, 1, 0.8))); // 5..25
+        vertices.push_back(VertexFormat(center + glm::vec3(x, y, 0), glm::vec3(1, 1, 0.8))); 
     }
 
-    // Indici pentru semicerc
     for (int i = 5; i < 5 + numSegments; i++) {
         indices.push_back(4);
         indices.push_back(i);
-        indices.push_back(i + 1);// punct următor
+        indices.push_back(i + 1);
     }
     Mesh* egg = new Mesh(name);
     egg->InitFromData(vertices, indices);
@@ -456,15 +388,14 @@ Mesh* object2D::create_heart(
         vertices.emplace_back(glm::vec3(x, y, 0), color);
     }
 
-    // Connect the vertices to form triangles
     for (int i = 0; i < num_points - 2; ++i) {
-        indices.push_back(0);          // center of the heart
+        indices.push_back(0);          
         indices.push_back(i + 1);
         indices.push_back(i + 2);
     }
 
     const auto heart = new Mesh(name);
-    heart->SetDrawMode(GL_TRIANGLES);  // GL_TRIANGLES creates filled triangles
+    heart->SetDrawMode(GL_TRIANGLES);  
     heart->InitFromData(vertices, indices);
 
     return heart;

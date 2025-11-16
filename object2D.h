@@ -21,5 +21,4 @@ namespace object2D
     Mesh* create_egg(const std::string& name, glm::vec3 left_bottom_corner, float lenght);
     Mesh* create_heart(const std::string& name,  float length, glm::vec3 color);
 
-    // Create square with given bottom left corner, length and color
 }

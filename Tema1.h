@@ -9,34 +9,25 @@ namespace m1
     class Tema1 final : public gfxc::SimpleScene
     {
     public:
-        // Constructor and destructor
         Tema1() = default;
         ~Tema1() override = default;
 
-        // Copy constructor
         Tema1(const Tema1& other) : SimpleScene(other), model_matrix_()
         {
-            // Perform copy of data members or resource ownership logic
         }
 
-        // Copy assignment operator
         Tema1& operator=(const Tema1& other) {
             if (this != &other) {
-                // Perform assignment of data members or resource ownership logic
             }
             return *this;
         }
 
-        // Move constructor
         Tema1(Tema1&&) noexcept : model_matrix_()
         {
-            // Perform move of data members or resource ownership logic
         }
 
-        // Move assignment operator
         Tema1& operator=(Tema1&& other) noexcept {
             if (this != &other) {
-                // Perform move assignment of data members or resource ownership logic
             }
             return *this;
         }
@@ -65,4 +56,4 @@ namespace m1
 
 
     };
-}   // namespace pvz
+}   

@@ -21,23 +21,24 @@ int can_start = 0;
 int aux[9][17] = { 0 };
 int nr_motors = 0;
 int nr_cannon = 0;
-int game = 0;
+int game = -1;
 int maxx = -1, minx = 17, maxy = -1, miny = 9;
 vector<pair<int, int>> cannons;
 vector<pair<int, int>> motors;
-float speeds[10] = { 0, 4, 8, 10, 11, 12, 12.5, 13 };
+float speeds[19] = { 0, 4, 8, 10, 11, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5};
 float translateX = 0, translateY = 0;
+int can_pause = 0;
 
 int nr_chickens;
-vector<tuple<float, float, float>> chickens;
+vector<tuple<float, float, float, float>> chickens;
 vector<pair<float, float>> initial_chickens = { {0,0}, {0,1}, {0,2}, {0,3},{0,4},{1,0},{1,1},{1,2},{1,3},{1,4} };
 int translateX_chicken = 0;
 int translateY_chicken = 0;
-int s = 2;
+float s = 10;
 int nr_bullets;
 vector<tuple<float, float, float>> bullets;
 float respawn_time = -1;
-int chicken_speed = 5;
+int chicken_speed = 20;
 vector<int> random_time_chickens;
 vector<int> random_time_chickens2;
 int hearts = 3;
@@ -46,6 +47,7 @@ vector<tuple<float, float, float>> eggs;
 int egg_speed = 2;
 int rounds = 0;
 int score = 0;
+int componente_utilizate = 0;
 gfxc::TextRenderer *textRenderer;
 void Tema1::Init() {
     textRenderer = new gfxc::TextRenderer(window->props.selfDir, 1280, 720);
@@ -105,7 +107,25 @@ void Tema1::FrameStart() {
 }
 
 void Tema1::Update(const float delta_time_seconds) {
-    if (game == 0) {
+    if (game == -1) {
+        textRenderer->RenderText("Press Enter to start",
+            300, 300, 3, glm::vec3(1, 1, 1));
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 17; ++j) {
+                grid[i][j] = 0;
+            }
+        }
+        componente_ramase = 10;
+        componente_utilizate = 0;
+        can_pause = 0;
+        maxx = -1, minx = 17, maxy = -1, miny = 9;
+        rounds = 0;
+        hearts = 3;
+        egg_speed = 2;
+        s = 25;
+        random_time = 100;
+    }
+    else if (game == 0) {
         if (nr_cannon > 0 && nr_motors > 0) {
             int ok = 0;
             miny = 9, maxy = 0, minx = 17, maxx = 0;
@@ -114,10 +134,10 @@ void Tema1::Update(const float delta_time_seconds) {
             for (int i = 0; i < 9 && !ok; ++i) {
                 for (int j = 0; j < 17 && !ok; ++j) {
                     if (grid[i][j] != 0) {
-                        if (dfs(i, j, aux) == 10 - componente_ramase)
+                        if (dfs(i, j, aux) == componente_utilizate)
                             ok = 1;
                         else
-                            ok = 2;
+                            ok = 2, printf("%d %d\n", nr_cannon, nr_motors);
                     }
                 }
             }
@@ -238,8 +258,12 @@ void Tema1::Update(const float delta_time_seconds) {
         }
     }
     else if (game == 1){
+        if (chickens.size() == 0 && respawn_time > 0) {
+            can_pause == 1;
+            respawn_time -= delta_time_seconds;
+        }
         if (hearts <= 0) {
-            exit(1);
+            game = -1;
         }
         for (int i = 0; i < 3; i++) {
             if (i < hearts) {
@@ -255,17 +279,18 @@ void Tema1::Update(const float delta_time_seconds) {
         if (chickens.size() == 0 && respawn_time <= 0) {
             int random = rand()%500;
             for (int i = 0; i < 10; ++i) {
-                chickens.push_back({ 320 + initial_chickens[i].second * 160, 450 + initial_chickens[i].first * 120,370 + initial_chickens[i].second * 160 });
-                random_time_chickens.push_back(rand() % random_time + random_time / 2);
+                chickens.push_back({ 320 + initial_chickens[i].second * 160, 450 + initial_chickens[i].first * 120,370 + initial_chickens[i].second * 160,  0});
+                random_time_chickens.push_back(rand() % random_time + random_time / (rounds + 1));
                 random_time_chickens2.push_back(random_time_chickens[i]);
             }
             respawn_time = 5;
-            s*=2;
+            s/=2;
             random_time /= 2;
             egg_speed *= 2;
+            
             rounds++;
             if (rounds > 3) {
-                exit(0);
+                exit(1);
             }
         }
         for (int i = 0; i < 9; ++i) {
@@ -302,10 +327,7 @@ void Tema1::Update(const float delta_time_seconds) {
                 nr_bullets--;
             }
         }
-        // iterate chickens backwards
         for (int i = (int)chickens.size() - 1; i >= 0; --i) {
-
-            // draw chicken
             model_matrix_ = glm::mat3(1);
             model_matrix_ *= transform2D::Translate(get<2>(chickens[i]), get<1>(chickens[i]));
             RenderMesh2D(meshes["enemy"], shaders["VertexColor"], model_matrix_);
@@ -314,19 +336,14 @@ void Tema1::Update(const float delta_time_seconds) {
                 random_time_chickens[i] = random_time_chickens2[i];
                 eggs.push_back({ get<2>(chickens[i]), get<1>(chickens[i]), 35 });
             }
-            // movement
-            get<1>(chickens[i]) -= 0.1f;
-            get<2>(chickens[i]) = get<0>(chickens[i]) + 250 * sin(get<1>(chickens[i]) / 20);
-
-
-            // remove if off screen (use < not == !!)
+            get<1>(chickens[i]) -= 0.1f * (rounds + 1);
+            get<3>(chickens[i]) += 0.1f;
+            get<2>(chickens[i]) = get<0>(chickens[i]) + 250 * sin(get<3>(chickens[i]) / s);
             if (get<1>(chickens[i]) < 1.0f) {
                 chickens.erase(chickens.begin() + i);
                 hearts--;
-                continue; // chicken gone, skip to next
+                continue; 
             }
-
-            // bullet collision, iterate backwards
             for (int j = (int)nr_bullets - 1; j >= 0; --j) {
 
                 int bx = std::get<0>(bullets[j]);
@@ -340,7 +357,7 @@ void Tema1::Update(const float delta_time_seconds) {
                     nr_bullets--;
                     score++;
                     chickens.erase(chickens.begin() + i);
-                    break; // go to next chicken
+                    break; 
                 }
             }
         }
@@ -363,7 +380,6 @@ void Tema1::Update(const float delta_time_seconds) {
                         float right = left + 30;
                         float top = bottom + 30 * mul;
 
-                        // punctul cel mai apropiat din pătrat
                         float closestX = cx;
                         if (cx < left) closestX = left;
                         else if (cx > right) closestX = right;
@@ -385,34 +401,25 @@ void Tema1::Update(const float delta_time_seconds) {
             if (hit) {
                 chickens.erase(chickens.begin() + i);
                 random_time_chickens.erase(random_time_chickens.begin() + i);
-                i--;                 // IMPORTANT ca să nu sari peste următorul
+                i--;                 
                 hearts--;
                 score++;
-                continue;            // exact cum ai la gloanțe
+                continue;            
             }
         }
-        // iterate eggs backwards
         for (int i = (int)eggs.size() - 1; i >= 0; --i) {
 
             float ex = get<0>(eggs[i]);
             float ey = get<1>(eggs[i]) + get<2>(eggs[i]);
-
-            // desen
             model_matrix_ = glm::mat3(1);
             model_matrix_ *= transform2D::Translate(ex, ey);
             RenderMesh2D(meshes["egg"], shaders["VertexColor"], model_matrix_);
-
-            // mișcare
             get<2>(eggs[i]) -= egg_speed;
             ey = get<1>(eggs[i]) + get<2>(eggs[i]);
-
-            // 1. dacă iese din ecran jos → șterge
             if (ey < 0) {
                 eggs.erase(eggs.begin() + i);
                 continue;
             }
-
-            // 2. coliziune cu grid (nava)
             bool hitShip = false;
 
             for (int gi = 0; gi < 9 && !hitShip; gi++) {
@@ -434,8 +441,8 @@ void Tema1::Update(const float delta_time_seconds) {
                         if (ey < bottom) closestY = bottom;
                         else if (ey > top) closestY = top;
 
-                        float dx = (ex - closestX) / 10.0f;   // Raza X = 10
-                        float dy = (ey - closestY) / 15.0f;   // Raza Y = 15
+                        float dx = (ex - closestX) / 10.0f;   
+                        float dy = (ey - closestY) / 15.0f;   
 
                         if (dx * dx + dy * dy <= 1.0f) {
                             hitShip = true;
@@ -450,7 +457,6 @@ void Tema1::Update(const float delta_time_seconds) {
                 continue;
             }
 
-            // 3. coliziune cu glonț
             for (int b = nr_bullets - 1; b >= 0; b--) {
 
                 float bx = get<0>(bullets[b]);
@@ -459,13 +465,11 @@ void Tema1::Update(const float delta_time_seconds) {
                 float dx = (bx - ex) / 10.0f;
                 float dy = (by - ey) / 15.0f;
 
-                if (dx * dx + dy * dy <= 1.0f) {
+                if (dx * dx + dy * dy <= 10.0f) {
 
-                    // șterge glonțul
                     bullets.erase(bullets.begin() + b);
                     nr_bullets--;
 
-                    // șterge oul
                     eggs.erase(eggs.begin() + i);
 
                     break;
@@ -473,9 +477,7 @@ void Tema1::Update(const float delta_time_seconds) {
             }
         }
 
-        if (chickens.size() == 0) {
-            respawn_time -= delta_time_seconds;
-        }
+        
 
 
     }
@@ -516,6 +518,17 @@ void Tema1::OnKeyPress(const int key, const int mods) {
 
         }
     }
+    if (key == GLFW_KEY_P) {
+        game = 0;
+        can_pause = 0;
+        componente_ramase = min(10, componente_ramase + 3);
+    }
+
+    if(key == GLFW_KEY_ENTER) {
+        if (game == -1) {
+            game = 0;
+        }
+    }
 }
 void Tema1::OnKeyRelease(const int key, const int mods) {}
 
@@ -540,7 +553,7 @@ void Tema1::OnMouseBtnPress(const int mouse_x, const int mouse_y, const int butt
         else if (mouse_x >= 70 && pos_y >= 510 && mouse_x < 130 && pos_y < 690) selected = 3;
         else if (mouse_x >= 1170 && pos_y >= 590 && mouse_x <= 1280 && pos_y <= 700 && can_start) game = 1;
     }
-    else if (button == 2) {
+    else if (button == 2 && componente_ramase < 10) {
         int pos_y = 720 - mouse_y;
         if (mouse_x >= 230 && pos_y >= 20 && mouse_x <= 1260 && pos_y <= 570) {
             int ok = 0;
@@ -558,7 +571,7 @@ void Tema1::OnMouseBtnPress(const int mouse_x, const int mouse_y, const int butt
                 if (grid[j - 2][i] == 3) grid[j - 2][i] = 0, ok = 1, nr_cannon--;
                 if (grid[j + 1][i] == 2) grid[j + 1][i] = 0, ok = 1, nr_motors--;
             }
-            if (ok) componente_ramase++;
+            if (ok) componente_ramase++, componente_utilizate--;;
         }
     }
 }
@@ -578,7 +591,7 @@ void Tema1::OnMouseBtnRelease(const int mouse_x, const int mouse_y, const int bu
                 }
             }
         }
-        if (ok) componente_ramase--;
+        if (ok) componente_ramase--, componente_utilizate++;
         click1 = false;
         selected = 0;
     }
